@@ -24,7 +24,7 @@ scipy=1.3.1
 
 ## Cite
 Please cite our paper if you the code or datasets in your own work
-
+```
 @article{
     shchur2019inensity,
     title={Intensity-Free Learning of Temporal Point Processes},
@@ -32,3 +32,4 @@ Please cite our paper if you the code or datasets in your own work
     journal={arXiv preprint},
     year={2019},
 }
+```
