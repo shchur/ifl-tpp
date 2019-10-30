@@ -24,6 +24,7 @@ def logistic_sample(means, log_scales):
     return torch.exp(log_scales) * inverse_sigmoid(z) + means
 
 
+# Credit: https://github.com/aravindsrinivas/flowpp/blob/master/flows/logistic.py
 def logistic_logpdf(x, mean, log_scale):
     z = (x - mean) * torch.exp(-log_scale)
     return z - log_scale - 2 * F.softplus(z)
