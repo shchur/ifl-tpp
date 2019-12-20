@@ -1,6 +1,6 @@
 # Intensity-Free Learning of Temporal Point Processes
 
-Pytorch implementation of the paper ["Intensity-Free Learning of Temporal Point Processes"](https://arxiv.org/abs/1909.12127).
+Pytorch implementation of the paper ["Intensity-Free Learning of Temporal Point Processes"](https://openreview.net/forum?id=HygOjhEYDH), Oleksandr Shchur, Marin Biloš and Stephan Günnemann, ICLR 2020.
 
 ## Usage
 In order to run the code, you need to install the `dpp` library that contains all the algorithms described in the paper
@@ -26,10 +26,10 @@ scipy=1.3.1
 Please cite our paper if you use the code or datasets in your own work
 ```
 @article{
-    shchur2019inensity,
+    shchur2020intensity,
     title={Intensity-Free Learning of Temporal Point Processes},
     author={Oleksandr Shchur and Marin Bilo\v{s} and Stephan G\"{u}nnemann},
-    journal={arXiv preprint arXiv:1909.12127},
-    year={2019},
+    journal={International Conference on Learning Representations (ICLR)},
+    year={2020},
 }
 ```
