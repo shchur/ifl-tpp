@@ -10,9 +10,10 @@ python setup.py install
 ```
 
 A Jupyter notebook [`code/interactive.ipynb`](https://github.com/shchur/ifl-tpp/blob/master/code/interactive.ipynb) contains the code for training models on the datasets used in the paper.
+The same code can also be run as a Python script [`code/train.py`](https://github.com/shchur/ifl-tpp/blob/master/code/train.py).
+
 Another notebook [`code/generate_embeddings.ipynb`](https://github.com/shchur/ifl-tpp/blob/master/code/generate_embeddings.ipynb) shows how to learn sequence embeddings for different synthetic datasets.
 
-The same code can also be run as a Python script `code/train.py`.
 
 ## Requirements
 ```
