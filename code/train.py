@@ -9,9 +9,7 @@ torch.set_default_tensor_type(torch.cuda.FloatTensor)
 seed = 0
 np.random.seed(seed)
 torch.manual_seed(seed)
-dataset_name = 'synth/hawkes1'  # other: ['stack_overflow', 'lastfm',
-#          'synth/poisson', 'synth/renewal', 'synth/self_correcting',
-#          'synth/hawkes1', 'synth/hawkes2']
+dataset_name = 'synth/hawkes1'  # run dpp.data.list_datasets() to see the list of available datasets
 
 # Model config
 context_size = 64                 # Size of the RNN hidden vector
