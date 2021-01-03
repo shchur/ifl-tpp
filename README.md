@@ -15,8 +15,8 @@ cd code
 python setup.py install
 ```
 
-A Jupyter notebook [`code/interactive.ipynb`](https://github.com/shchur/ifl-tpp/blob/refactor/code/interactive.ipynb) contains the code for training models on the datasets used in the paper.
-The same code can also be run as a Python script [`code/train.py`](https://github.com/shchur/ifl-tpp/blob/refactor/code/train.py).
+A Jupyter notebook [`code/interactive.ipynb`](https://github.com/shchur/ifl-tpp/blob/master/code/interactive.ipynb) contains the code for training models on the datasets used in the paper.
+The same code can also be run as a Python script [`code/train.py`](https://github.com/shchur/ifl-tpp/blob/master/code/train.py).
 
 ## Using your own data
 You can save your custom dataset in the format used in our code as follows:
@@ -33,9 +33,9 @@ torch.save(dataset, "data/my_dataset.pkl")
 ```
 
 ## Defining new models
-[RecurrentTPP](https://github.com/shchur/ifl-tpp/blob/refactor/code/dpp/models/recurrent_tpp.py) is the base class for marked TPP models.
+[RecurrentTPP](https://github.com/shchur/ifl-tpp/blob/master/code/dpp/models/recurrent_tpp.py) is the base class for marked TPP models.
 
-You just need to inherit from it and implement the `get_inter_time_dist` method that defines how to obtain the distribution (an instance of [`torch.distributions.Distribution`](https://github.com/pytorch/pytorch/blob/master/torch/distributions/distribution.py)) over the inter-event times given the context vector. For example, have a look at the [LogNormMix model](https://github.com/shchur/ifl-tpp/blob/refactor/code/dpp/models/log_norm_mix.py) from our paper.
+You just need to inherit from it and implement the `get_inter_time_dist` method that defines how to obtain the distribution (an instance of [`torch.distributions.Distribution`](https://github.com/pytorch/pytorch/blob/master/torch/distributions/distribution.py)) over the inter-event times given the context vector. For example, have a look at the [LogNormMix model](https://github.com/shchur/ifl-tpp/blob/master/code/dpp/models/log_norm_mix.py) from our paper.
 You can also change the `get_features` and `get_context` methods of `RecurrentTPP` to, for example, use a transformer instead of an RNN.
 
 
