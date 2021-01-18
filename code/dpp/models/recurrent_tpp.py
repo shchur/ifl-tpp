@@ -4,6 +4,9 @@ import torch.nn as nn
 
 from torch.distributions import Categorical
 
+from dpp.data.batch import Batch
+from dpp.utils import diff
+
 
 class RecurrentTPP(nn.Module):
     """
@@ -42,6 +45,7 @@ class RecurrentTPP(nn.Module):
         else:
             self.num_features = 1
         self.rnn_type = rnn_type
+        self.context_init = nn.Parameter(torch.zeros(context_size))  # initial state of the RNN
         self.rnn = getattr(nn, rnn_type)(input_size=self.num_features, hidden_size=self.context_size, batch_first=True)
 
     def get_features(self, batch: dpp.data.Batch) -> torch.Tensor:
@@ -63,23 +67,28 @@ class RecurrentTPP(nn.Module):
             features = torch.cat([features, mark_emb], dim=-1)
         return features  # (batch_size, seq_len, num_features)
 
-    def get_context(self, features: torch.Tensor) -> torch.Tensor:
+    def get_context(self, features: torch.Tensor, remove_last: bool = True) -> torch.Tensor:
         """
         Get the context (history) embedding from the sequence of events.
 
         Args:
             features: Feature vector corresponding to each event,
                 shape (batch_size, seq_len, num_features)
+            remove_last: Whether to remove the context embedding for the last event.
 
         Returns:
             context: Context vector used to condition the distribution of each event,
-                shape (batch_size, seq_len, context_size)
+                shape (batch_size, seq_len, context_size) if remove_last == False
+                shape (batch_size, seq_len + 1, context_size) if remove_last == True
 
         """
         context = self.rnn(features)[0]
         batch_size, seq_len, context_size = context.shape
+        context_init = self.context_init[None, None, :].expand(batch_size, 1, -1)  # (batch_size, 1, context_size)
         # Shift the context by vectors by 1: context embedding after event i is used to predict event i + 1
-        context = torch.cat([torch.zeros(batch_size, 1, context_size), context[:, 1:, :]], dim=1)
+        if remove_last:
+            context = context[:, :-1, :]
+        context = torch.cat([context_init, context], dim=1)
         return context
 
     def get_inter_time_dist(self, context: torch.Tensor) -> torch.distributions.Distribution:
@@ -127,5 +136,55 @@ class RecurrentTPP(nn.Module):
         log_p *= batch.mask  # (batch_size, seq_len)
         return log_p.sum(-1) + log_surv_last  # (batch_size,)
 
-    def sample(self, t_max: float, batch_size: int = 1, context_init: torch.Tensor = None) -> dpp.data.Batch:
-        raise NotImplementedError()
+    def sample(self, t_end: float, batch_size: int = 1, context_init: torch.Tensor = None) -> dpp.data.Batch:
+        """Generate a batch of sequence from the model.
+
+        Args:
+            t_end: Size of the interval on which to simulate the TPP.
+            batch_size: Number of independent sequences to simulate.
+            context_init: Context vector for the first event.
+                Can be used to condition the generator on past events,
+                shape (context_size,)
+
+        Returns;
+            batch: Batch of sampled sequences. See dpp.data.batch.Batch.
+        """
+        if context_init is None:
+            # Use the default context vector
+            context_init = self.context_init
+        else:
+            # Use the provided context vector
+            context_init = context_init.view(self.context_size)
+        next_context = context_init[None, None, :].expand(batch_size, 1, -1)
+        inter_times = torch.empty(batch_size, 0)
+        if self.num_marks > 1:
+            marks = torch.empty(batch_size, 0, dtype=torch.long)
+
+        generated = False
+        while not generated:
+            inter_time_dist = self.get_inter_time_dist(next_context)
+            next_inter_times = inter_time_dist.sample()  # (batch_size, 1)
+            inter_times = torch.cat([inter_times, next_inter_times], dim=1)  # (batch_size, seq_len)
+
+            # Generate marks, if necessary
+            if self.num_marks > 1:
+                mark_logits = torch.log_softmax(self.mark_linear(next_context), dim=-1)  # (batch_size, 1, num_marks)
+                mark_dist = Categorical(logits=mark_logits)
+                next_marks = mark_dist.sample()  # (batch_size, 1)
+                marks = torch.cat([marks, next_marks], dim=1)
+            else:
+                marks = None
+
+            with torch.no_grad():
+                generated = inter_times.sum(-1).min() >= t_end
+            batch = Batch(inter_times=inter_times, mask=torch.ones_like(inter_times), marks=marks)
+            features = self.get_features(batch)  # (batch_size, seq_len, num_features)
+            context = self.get_context(features, remove_last=False)  # (batch_size, seq_len, context_size)
+            next_context = context[:, [-1], :]  # (batch_size, 1, context_size)
+
+        arrival_times = inter_times.cumsum(-1)  # (batch_size, seq_len)
+        inter_times = diff(arrival_times.clamp(max=t_end), dim=-1)
+        mask = (arrival_times <= t_end).float()  # (batch_size, seq_len)
+        if self.num_marks > 1:
+            marks = marks * mask  # (batch_size, seq_len)
+        return Batch(inter_times=inter_times, mask=mask, marks=marks)

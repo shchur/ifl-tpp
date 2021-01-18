@@ -1,4 +1,5 @@
 import torch
+import torch.nn.functional as F
 
 from typing import Any, List, Optional
 
@@ -15,6 +16,7 @@ def _size_repr(key: str, item: Any) -> str:
         out = str(item)
 
     return f"{key}={out}"
+
 
 class DotDict:
     """Dictionary where elements can be accessed as dict.entry."""
@@ -68,3 +70,20 @@ def pad_sequence(
         out_tensor[i, :length, ...] = tensor
 
     return out_tensor
+
+
+def diff(x, dim: int = -1):
+    """Inverse of x.cumsum(dim=dim).
+    Compute differences between subsequent elements of the tensor.
+    Args:
+        x: Input tensor of arbitrary shape.
+        dim: Dimension over which to compute the difference, {-2, -1}.
+    Returns:
+        diff: Tensor of the the same shape as x.
+    """
+    if dim == -1:
+        return x - F.pad(x, (1, 0))[..., :-1]
+    elif dim == -2:
+        return x - F.pad(x, (0, 0, 1, 0))[..., :-1, :]
+    else:
+        raise ValueError("dim must be equal to -1 or -2")
